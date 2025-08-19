@@ -1,0 +1,26 @@
+﻿@model List<SmartChat.Web.Views.viewModle.UserDashboardViewModel>
+
+<div class="container mt-5">
+    <h3>Your Conversations</h3>
+    <div class="list-group mt-3">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var conv in Model)
+            {
+                <a href="@Url.Action("Index", "Chat", new { conversationId = conv.ConversationId })"
+                   class="list-group-item list-group-item-action">
+                    <strong>@conv.ConversationTitle</strong>
+                    <span class="text-muted"> - Last message: @conv.LastMessageText</span>
+                    <span class="text-muted"> - Last message from: @conv.LastMessageSenderName</span>
+                    <div class="text-end text-muted" style="font-size:0.8em;">
+                        @conv.LastMessageAt?.ToString("g")
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">No conversations found.</div>
+        }
+    </div>
+</div>
