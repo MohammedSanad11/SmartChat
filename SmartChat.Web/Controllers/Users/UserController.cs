@@ -38,10 +38,10 @@ namespace SmartChat.Web.Controllers.Users
 
             // ===== My Conversations =====
             var myConversations = await _uintOfWork._ConversationsRepository.FindAsync(
-                predicate: c => c.UserId == currentUser.Id || c.AgentId == currentUser.Id,
-                include: q => q.Include(c => c.messages)
-                               .Include(c => c.User)
-                               .Include(c => c.Agent)
+                c => c.UserId == currentUser.Id || c.AgentId == currentUser.Id,
+                q => q.Include(c => c.messages)
+                      .Include(c => c.User)
+                      .Include(c => c.Agent)
             );
 
             // ===== All Conversations (Admin only) =====
@@ -49,19 +49,20 @@ namespace SmartChat.Web.Controllers.Users
             if (role?.Name == "Admin")
             {
                 allConversations = await _uintOfWork._ConversationsRepository.FindAsync(
-                    predicate: c => true,
-                    include: q => q.Include(c => c.messages)
-                                   .Include(c => c.User)
-                                   .Include(c => c.Agent)
+                    c => true,
+                    q => q.Include(c=>c.messages)
+                          .Include(c => c.User)
+                          .Include(c => c.Agent)
                 );
             }
 
             // ===== Build My Conversations VM =====
-            var myDashboardVm = myConversations.Select(c =>
+            var myDashboardVm = new List<UserDashboardViewModel>();
+            foreach (var c in myConversations)
             {
                 var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
 
-                string conversationTitle;
+                string conversationTitle = "";
                 if (c.UserId == currentUser.Id && c.Agent != null)
                     conversationTitle = c.Agent.Name;
                 else if (c.AgentId == currentUser.Id && c.User != null)
@@ -72,48 +73,53 @@ namespace SmartChat.Web.Controllers.Users
                     conversationTitle = "Unknown";
 
                 string senderName = "Unknown";
-                if (lastMessage != null && lastMessage.SenderId != null)
+                if (lastMessage?.SenderId != null)
                 {
-                    var senderUser = _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId).Result;
+                    var senderUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId);
                     senderName = senderUser?.Name ?? "Unknown";
                 }
 
-                return new UserDashboardViewModel
+                myDashboardVm.Add(new UserDashboardViewModel
                 {
                     ConversationId = c.Id,
                     ConversationTitle = conversationTitle,
                     CreatedAt = c.CreateAt,
-                    LastMessageAt = lastMessage?.CreatedAt,
                     LastMessageText = lastMessage?.Text ?? "",
                     LastMessageSenderName = senderName,
+                    LastMessageAt = lastMessage?.CreatedAt,
                     MessageCount = c.messages?.Count() ?? 0
-                };
-            }).ToList();
+                });
+            }
 
-            // ===== Build All Conversations VM for Admin =====
-            var allDashboardVm = allConversations?.Select(c =>
+            // ===== Build All Conversations VM for Admin (Hidden content) =====
+            var allDashboardVm = new List<UserDashboardViewModel>();
+            if (allConversations != null)
             {
-                var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
-                string senderName = "Unknown";
-                if (lastMessage != null && lastMessage.SenderId != null)
+                foreach (var c in allConversations)
                 {
-                    var senderUser = _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId).Result;
-                    senderName = senderUser?.Name ?? "Unknown";
+                    var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
+
+                    string senderName = "Unknown";
+                    if (lastMessage?.SenderId != null)
+                    {
+                        var senderUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId);
+                        senderName = senderUser?.Name ?? "Unknown";
+                    }
+
+                    allDashboardVm.Add(new UserDashboardViewModel
+                    {
+                        ConversationId = c.Id,
+                        ConversationTitle = (c.User?.Name ?? "Unknown") + " & " + (c.Agent?.Name ?? "Unknown"),
+                        CreatedAt = c.CreateAt,
+                        LastMessageText = "Hidden", // نخفي محتوى الرسالة
+                        LastMessageSenderName = senderName,
+                        LastMessageAt = lastMessage?.CreatedAt,
+                        MessageCount = c.messages?.Count() ?? 0
+                    });
                 }
+            }
 
-                return new UserDashboardViewModel
-                {
-                    ConversationId = c.Id,
-                    ConversationTitle = (c.User?.Name ?? "Unknown") + " & " + (c.Agent?.Name ?? "Unknown"),
-                    CreatedAt = c.CreateAt,
-                    LastMessageAt = lastMessage?.CreatedAt,
-                    LastMessageText = lastMessage?.Text ?? "",
-                    LastMessageSenderName = senderName,
-                    MessageCount = c.messages?.Count() ?? 0
-                };
-            }).ToList();
-
-            // ===== All Users for Start Chat Button =====
+            // ===== All Users for Start Chat =====
             var allUsers = await _uintOfWork._UsersRepository.FindAsync(u => u.Id != currentUser.Id);
 
             var vm = new DashboardViewModel
@@ -126,12 +132,11 @@ namespace SmartChat.Web.Controllers.Users
                     ConversationCount = myDashboardVm.Count
                 },
                 MyConversations = myDashboardVm,
-                AllConversations = allDashboardVm ?? new List<UserDashboardViewModel>(),
+                AllConversations = allDashboardVm,
                 AllUsers = allUsers.Select(u => new UserVm { Id = u.Id, Name = u.Name }).ToList()
             };
 
             return View(vm);
-
         }
 
 

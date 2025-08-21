@@ -1,6 +1,5 @@
-﻿@model  SmartChat.Web.Views.viewModle.DashboardViewModel
+﻿@model SmartChat.Web.Views.viewModle.DashboardViewModel
 @{
-
     Layout = "DashboardLayout";
 }
 
@@ -8,32 +7,41 @@
 
     <div class="row">
 
+        <!-- My Conversations Card -->
         <div class="col-lg-4 col-12 mb-3">
             <div class="card card-primary shadow">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-comments"></i> My Conversations</h3>
                 </div>
                 <div class="card-body">
-                    @foreach(var conv in Model.MyConversations)
+                    @if (!Model.MyConversations.Any())
                     {
-                        <div class="mb-2 p-2 border rounded d-flex justify-content-between align-items-center">
-                            <span>@conv.ConversationTitle (@conv.MessageCount msgs)</span>
-                            <a href="@Url.Action("Index", "Chat", new { conversationId = conv.ConversationId })" class="btn btn-sm btn-info">
-                                Open
-                            </a>
-                        </div>
+                        <div class="alert alert-info">You have no conversations yet.</div>
+                    }
+                    else
+                    {
+                        @foreach(var conv in Model.MyConversations)
+                        {
+                            <div class="mb-2 p-2 border rounded d-flex justify-content-between align-items-center">
+                                <span>@conv.ConversationTitle (@conv.MessageCount msgs)</span>
+                                <a href="@Url.Action("Index", "Chat", new { conversationId = conv.ConversationId })" class="btn btn-sm btn-info">
+                                    Open
+                                </a>
+                            </div>
+                        }
                     }
                 </div>
             </div>
         </div>
 
+        <!-- Start New Chat Card -->
         <div class="col-lg-4 col-12 mb-3">
             <div class="card card-success shadow">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-plus"></i> Start New Chat</h3>
                 </div>
                 <div class="card-body d-flex justify-content-center">
-                    <a href="@Url.Action("create", "Conversation")" class="btn btn-primary btn-block">
+                    <a href="@Url.Action("Create", "Conversation")" class="btn btn-primary btn-block">
                         Start New Chat
                     </a>
                 </div>
@@ -55,46 +63,41 @@
 
     </div>
 
-   @if (Model.CurrentUser.Role == "Admin")
-{
-    <div class="card card-outline card-secondary mt-4">
-        <div class="card-header">
-            <h3 class="card-title">All Conversations</h3>
-        </div>
-        <div class="card-body table-responsive p-0">
-            <table class="table table-hover text-nowrap">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Message Count</th>
-                        <th>Last Message</th>
-                        <th>Sender</th>
-                        <th>Created At</th>
-                        <th>Last Message At</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                        @foreach (var conv in Model.AllConversations)
-                    {
+    @if (Model.CurrentUser.Role == "Admin")
+    {
+       
+        <div class="card card-outline card-secondary mt-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-list"></i> All Conversations</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                    <thead>
                         <tr>
-                            <td>@conv.ConversationTitle</td>
-                            <td>@conv.MessageCount</td>
-                            <td>@conv.LastMessageText</td>
-                            <td>@conv.LastMessageSenderName</td>
-                            <td>@conv.CreatedAt.ToString("dd/MM/yyyy")</td>
-                            <td>@conv.LastMessageAt?.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>
-                                <a href="@Url.Action("Index", "Chat", new { conversationId = conv.ConversationId })" class="btn btn-sm btn-primary">
-                                    View Chat
-                                </a>
-                            </td>
+                            <th>Title</th>
+                            <th>Message Count</th>
+                            <th>Last Message</th>
+                            <th>Sender</th>
+                            <th>Created At</th>
+                            <th>Last Message At</th>
+                            
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var conv in Model.AllConversations)
+                        {
+                            <tr>
+                                <td>@conv.ConversationTitle</td>
+                                <td>@conv.MessageCount</td>
+                                <td>Hidden</td> 
+                                <td>@conv.LastMessageSenderName</td>
+                                <td>@conv.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>@conv.LastMessageAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-}
-
+    }
 </div>
