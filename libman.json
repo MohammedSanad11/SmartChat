@@ -1,0 +1,34 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "admin-lte@3.2.0",
+      "destination": "wwwroot/lib/admin-lte"
+    },
+    {
+      "library": "bootstrap@4.6.2",
+      "destination": "wwwroot/lib/bootstrap"
+    },
+    {
+      "library": "jquery@3.6.4",
+      "destination": "wwwroot/lib/jquery"
+    },
+    {
+      "library": "font-awesome@5.15.4",
+      "destination": "wwwroot/lib/fontawesome-free"
+    },
+    {
+      "library": "overlayscrollbars@1.13.1",
+      "destination": "wwwroot/lib/overlayScrollbars"
+    },
+    {
+      "library": "icheck-bootstrap@3.0.1",
+      "destination": "wwwroot/lib/icheck-bootstrap"
+    },
+    {
+      "library": "tempusdominus-bootstrap-4@5.39.0",
+      "destination": "wwwroot/lib/tempusdominus-bootstrap-4"
+    }
+  ]
+}

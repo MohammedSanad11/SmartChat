@@ -6,6 +6,7 @@ using SmartChat.Application.Features.Users.Commands.DeleteUsers;
 using SmartChat.Application.Features.Users.Commands.UpdateUsers;
 using SmartChat.Application.Features.Users.Queres.GetAllUsers;
 using SmartChat.Application.Features.Users.Queres.GetUsersById;
+using SmartChat.Domain.Entities.Conversations;
 using SmartChat.Web.Mapping;
 using SmartChat.Web.Views.viewModle;
 
@@ -29,37 +30,110 @@ namespace SmartChat.Web.Controllers.Users
             if (string.IsNullOrEmpty(username))
                 return RedirectToAction("Login", "Auth");
 
-            var user = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.UesrName == username);
-            if (user == null) return NotFound();
+            var currentUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.UesrName == username);
+            if (currentUser == null) return NotFound();
 
-            var userId = user.Id;
+            var role = await _uintOfWork._RolesRepository.GetByConditionAsync(r => r.Id == currentUser.RoleId);
+            ViewData["RoleName"] = role?.Name ?? "Unknown";
 
-          
-            var conversations = await _uintOfWork._ConversationsRepository.FindAsync(
-                c => c.UserId == userId || c.AgentId == userId,
+            // ===== My Conversations =====
+            var myConversations = await _uintOfWork._ConversationsRepository.FindAsync(
+                predicate: c => c.UserId == currentUser.Id || c.AgentId == currentUser.Id,
                 include: q => q.Include(c => c.messages)
-                              .Include(c => c.User)
-                              .Include(c => c.Agent)
+                               .Include(c => c.User)
+                               .Include(c => c.Agent)
             );
 
-            if (!conversations.Any())
+            // ===== All Conversations (Admin only) =====
+            IEnumerable<Conversation> allConversations = null;
+            if (role?.Name == "Admin")
             {
-                return RedirectToAction("Create", "Conversation");
+                allConversations = await _uintOfWork._ConversationsRepository.FindAsync(
+                    predicate: c => true,
+                    include: q => q.Include(c => c.messages)
+                                   .Include(c => c.User)
+                                   .Include(c => c.Agent)
+                );
             }
 
-            var dashboardVm = conversations
-                .Select(c => new UserDashboardViewModel
+            // ===== Build My Conversations VM =====
+            var myDashboardVm = myConversations.Select(c =>
+            {
+                var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
+
+                string conversationTitle;
+                if (c.UserId == currentUser.Id && c.Agent != null)
+                    conversationTitle = c.Agent.Name;
+                else if (c.AgentId == currentUser.Id && c.User != null)
+                    conversationTitle = c.User.Name;
+                else if (c.User != null && c.Agent != null)
+                    conversationTitle = c.User.Name + " & " + c.Agent.Name;
+                else
+                    conversationTitle = "Unknown";
+
+                string senderName = "Unknown";
+                if (lastMessage != null && lastMessage.SenderId != null)
+                {
+                    var senderUser = _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId).Result;
+                    senderName = senderUser?.Name ?? "Unknown";
+                }
+
+                return new UserDashboardViewModel
                 {
                     ConversationId = c.Id,
-                    ConversationTitle = c.User != null ? c.User.Name : "Unknown",
+                    ConversationTitle = conversationTitle,
                     CreatedAt = c.CreateAt,
-                    LastMessageAt = c.messages != null && c.messages.Any() ? c.messages.Max(m => m.CreatedAt) : (DateTime?)null,
-                    LastMessageText = c.messages != null && c.messages.Any() ?
-                                      c.messages.OrderByDescending(m => m.CreatedAt).First().Text : ""
-                }).ToList();
+                    LastMessageAt = lastMessage?.CreatedAt,
+                    LastMessageText = lastMessage?.Text ?? "",
+                    LastMessageSenderName = senderName,
+                    MessageCount = c.messages?.Count() ?? 0
+                };
+            }).ToList();
 
-            return View(dashboardVm);
+            // ===== Build All Conversations VM for Admin =====
+            var allDashboardVm = allConversations?.Select(c =>
+            {
+                var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
+                string senderName = "Unknown";
+                if (lastMessage != null && lastMessage.SenderId != null)
+                {
+                    var senderUser = _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId).Result;
+                    senderName = senderUser?.Name ?? "Unknown";
+                }
+
+                return new UserDashboardViewModel
+                {
+                    ConversationId = c.Id,
+                    ConversationTitle = (c.User?.Name ?? "Unknown") + " & " + (c.Agent?.Name ?? "Unknown"),
+                    CreatedAt = c.CreateAt,
+                    LastMessageAt = lastMessage?.CreatedAt,
+                    LastMessageText = lastMessage?.Text ?? "",
+                    LastMessageSenderName = senderName,
+                    MessageCount = c.messages?.Count() ?? 0
+                };
+            }).ToList();
+
+            // ===== All Users for Start Chat Button =====
+            var allUsers = await _uintOfWork._UsersRepository.FindAsync(u => u.Id != currentUser.Id);
+
+            var vm = new DashboardViewModel
+            {
+                CurrentUser = new CurrentUserVm
+                {
+                    Id = currentUser.Id,
+                    Name = currentUser.Name,
+                    Role = role?.Name ?? "Unknown",
+                    ConversationCount = myDashboardVm.Count
+                },
+                MyConversations = myDashboardVm,
+                AllConversations = allDashboardVm ?? new List<UserDashboardViewModel>(),
+                AllUsers = allUsers.Select(u => new UserVm { Id = u.Id, Name = u.Name }).ToList()
+            };
+
+            return View(vm);
+
         }
+
 
         public async Task<IActionResult> Details(Guid id)
         {

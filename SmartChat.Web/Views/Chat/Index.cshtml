@@ -1,27 +1,68 @@
 ﻿@model SmartChat.Web.Views.viewModle.ChatViewModel
+@{
+    Layout = "DashboardLayout";
+}
 
-<div class="container mt-4">
-    <h3>Chat</h3>
-    <div id="chatBox" class="border p-2" style="height:400px; overflow-y:auto; display:flex; flex-direction:column;">
-        @foreach (var msg in Model.Messages)
-        {
-            var isMine = msg.SenderId == Model.CurrentUserId;
-            <div class="mb-2 text-@(isMine ? "end" : "start")">
-                <span class="badge rounded-pill @(isMine ? "bg-success" : "bg-secondary") text-white">
-                    @msg.Text
-                </span>
-                <div class="text-muted" style="font-size:0.8em;">
-                    @msg.CreatedAt.ToString("HH:mm")
-                </div>
-            </div>
-        }
+<style>
+    .direct-chat-text {
+        max-width: 200px; 
+        word-wrap: break-word; 
+        font-size: 14px; 
+        padding: 8px 12px;
+        border-radius: 12px;
+    }
+
+    .direct-chat-img {
+        width: 35px;
+        height: 35px;
+        object-fit: cover;
+    }
+</style>
+
+<div class="card direct-chat direct-chat-primary shadow">
+    <div class="card-header">
+      
+        <div class="card-tools">
+            <span class="badge badge-primary">@Model.Messages.Count() Messages</span>
+        </div>
     </div>
 
-    <div class="mt-2 d-flex">
-        <input type="text" id="messageInput" class="form-control me-2" placeholder="Type a message..." />
-        <button id="sendBtn" class="btn btn-primary">Send</button>
+    <div class="card-body">
+        <div class="direct-chat-messages" id="chatBox" style="height:400px; overflow-y:auto;">
+            @foreach (var msg in Model.Messages)
+            {
+                var isMine = msg.SenderId == Model.CurrentUserId;
+                <div class="direct-chat-msg @(isMine ? "right" : "left")">
+                    <div class="direct-chat-infos clearfix">
+                        <span class="direct-chat-name float-@(isMine ? "right" : "left")">
+                            @(isMine ? "You" : msg.SenderName)
+                        </span>
+                        <span class="direct-chat-timestamp float-@(isMine ? "left" : "right")">
+                            @msg.CreatedAt.ToString("HH:mm dd/MM")
+                        </span>
+                    </div>
+                        <img class="direct-chat-img" src=@Url.Content("~/imge/default-avatar.png") alt="User Image">
+                    <div class="direct-chat-text @(isMine ? "bg-success text-white" : "bg-secondary text-white")">
+                        @msg.Text
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type Message ..." class="form-control">
+            <span class="input-group-append">
+                <button type="button" id="sendBtn" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </span>
+        </div>
     </div>
 </div>
+
+
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
@@ -35,7 +76,7 @@
             .build();
 
         connection.on("ReceiveMessage", function (msg) {
-            const userId = msg.userId || msg.SenderId; 
+            const userId = msg.userId || msg.SenderId;
             const text = msg.text || msg.Text;
             const createdAt = new Date(msg.createdAt || msg.CreatedAt);
 

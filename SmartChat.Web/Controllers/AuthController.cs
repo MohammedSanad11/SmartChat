@@ -35,7 +35,7 @@ namespace SmartChat.Web.Controllers
                 return View(model);
 
             var user = await _uintOfWork._UsersRepository.GetByConditionAsync(
-                u => u.UesrName == model.Username,
+                u => u.Email == model.Email,
                 include: q => q.Include(u => u.Role)
             );
 
