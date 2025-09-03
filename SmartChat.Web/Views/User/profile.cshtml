@@ -1,0 +1,86 @@
+﻿@model SmartChat.Web.Views.viewModle.CurrentUserViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Profile";
+}
+<style>
+    .profile-container {
+        
+        padding: 5rem 5rem;
+        margin-left: 230px;
+        background-color: #1A1A1A; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        text-align: center;
+        color: #ffffff;
+    }
+
+    .profile-header {
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid #D4AF47; 
+        margin-bottom: 1rem;
+    }
+
+    .profile-stats {
+        display: flex;
+        justify-content: space-around;
+        background-color: #2C2C2C;
+        padding: 2rem;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+  
+    .profile-stats .stat {
+           text-align: center;
+           flex: 1;
+           color: #ffffff;
+    }
+
+    .profile-stats i {
+        color: #D4AF47;
+        margin-bottom: 0.5rem;
+    }
+ 
+    .btn-outline-gold {
+        color: #D4AF47;
+        border-color: #D4AF47;
+    }
+
+   .btn-outline-gold:hover {
+            background-color: #D4AF47;
+            color: #1A1A1A;
+        }
+</style>
+
+
+<div class="profile-container">
+    <div class="profile-header">
+        <img src="~/imge/smart.jpg" alt="User Avatar" class="profile-avatar">
+        <h2>@Model.UserName</h2>
+        <p class="text-muted">@Model.Email</p>
+        <p class="text-info">Role: @Model.Role</p>
+        <a href="/Settings" class="btn btn-outline-gold btn-sm">Edit Profile</a>
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat">
+            <i class="fas fa-comments fa-2x"></i>
+            <h3>@Model.ConversationCount</h3>
+            <p>Total Conversations</p>
+        </div>
+        <div class="stat">
+            <i class="fas fa-user-tag fa-2x"></i>
+            <h3>@Model.Role</h3>
+            <p>User Role</p>
+        </div>
+    </div>
+</div>
+
+
+
+

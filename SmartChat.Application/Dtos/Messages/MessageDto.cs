@@ -13,7 +13,7 @@ namespace SmartChat.Application.Dtos.Messages
         public Guid ConversationId { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid SenderId { get; set; }
-
+        public string  ReceiverName {get;set;}
         public string SenderName { get; set; }
     }
 }

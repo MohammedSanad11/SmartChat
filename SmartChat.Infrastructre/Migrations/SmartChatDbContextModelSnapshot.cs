@@ -77,6 +77,8 @@ namespace SmartChat.Infrastructre.Migrations
 
                     b.HasIndex("ConversationId");
 
+                    b.HasIndex("SenderId");
+
                     b.ToTable("Messages", (string)null);
                 });
 
@@ -184,7 +186,15 @@ namespace SmartChat.Infrastructre.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SmartChat.Domain.Entities.Users.User", "user")
+                        .WithMany("Messages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Conversation");
+
+                    b.Navigation("user");
                 });
 
             modelBuilder.Entity("SmartChat.Domain.Entities.TypingStatuses.TypingStatus", b =>
@@ -234,6 +244,8 @@ namespace SmartChat.Infrastructre.Migrations
                     b.Navigation("AssignedConversations");
 
                     b.Navigation("Conversations");
+
+                    b.Navigation("Messages");
 
                     b.Navigation("typingStatuses");
                 });

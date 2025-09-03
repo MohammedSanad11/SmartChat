@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartChat.Application.Core.Interfasces;
 using SmartChat.Application.Dtos.Conversations;
+using SmartChat.Domain.Entities.Users;
 using SmartChat.Domain.Interface;
 using System;
 using System.Collections.Generic;
@@ -24,18 +25,24 @@ namespace SmartChat.Application.Features.Conversations.Quereys.GetByIdConversati
 
         public async Task<ConversationDto> Handle(GetByIdConversationQuery request)
         {
+           
             var conversation = await _uintOfWork._ConversationsRepository
              .GetByConditionAsync(
-          c => c.Id == request.Id,
-          include: query => query
-              .Include(c => c.User)
-              .Include(c => c.messages),
-          AsNoTracking: true);
+           c => c.Id == request.Id,
+        include: query => query
+            .Include(c => c.User)
+            .Include(c => c.Agent)
+            .Include(c => c.messages)
+                .ThenInclude(m => m.user),
+        AsNoTracking: true);
+
 
             if (conversation == null)
                 return null;
 
-            return _mapper.Map<ConversationDto>(conversation);
+            var result =_mapper.Map<ConversationDto>(conversation);
+            result.CurrentUserId = request.CurrentUserId;
+            return result;
         }
     }
 }

@@ -18,7 +18,8 @@ public class User
     public string PassWord { get; set; }
     public Guid RoleId { get; set; }
     public Role Role { get; set; }
-    public ICollection<Conversation> Conversations { get; set; }
+    public ICollection<Message> Messages { get; set; } = new List<Message>();
+    public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();    
     public ICollection<Conversation> AssignedConversations { get; set; }
     public ICollection<TypingStatus> typingStatuses { get; set; }
     public DateTime CreatedAt { get; set; }

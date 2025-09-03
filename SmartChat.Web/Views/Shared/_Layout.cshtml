@@ -1,49 +1,326 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SmartChat.Web</title>
+    <title>@ViewData["Title"] - SmartChat</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SmartChat.Web.styles.css" asp-append-version="true" />
+   
+    <style>
+    :root {
+    --background-navbar: #11111B;
+     --background-main: #11111B;
+    --background-card: #2A2A3C;
+    --text-main: #FFFFFF;
+    --text-muted: #A1A1AA;
+    --accent-gold: #D4AF47;
+    --accent-blue: #3B82F6;
+    --accent-red: #EF4444;
+    --accent-green: #22C55E;
+   }
+
+      body {
+          background-color: #1A1A1A; /* نفس لون الكنتينر */
+          margin: 0;
+          padding: 0;
+          min-height: 100vh; /* يغطي طول الصفحة كله */
+      }
+
+
+    .navbar {
+    background-color: var(--background-navbar) !important;
+    padding: 0.7rem 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-brand {
+    color: var(--text-main) !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    }
+
+    .navbar-brand img {
+    margin-right: 0.5rem;
+    }
+
+    .navbar-nav .nav-link {
+    color: var(--text-main) !important;
+    transition: color 0.3s ease;
+    }
+
+    .navbar-nav .nav-link:hover {
+    color: var(--accent-gold) !important;
+    }
+
+    .navbar .form-control {
+    background-color: var(--background-card);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-main);
+    }
+
+    .navbar .form-control::placeholder {
+    color: var(--text-muted);
+    }
+
+    .navbar .btn {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    }
+
+    .navbar .btn:hover {
+    background-color: var(--accent-gold);
+    color: var(--background-navbar);
+    }
+
+    .navbar .dropdown-menu {
+    background-color: var(--background-card);
+    border: none;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .navbar .dropdown-item {
+    color: var(--text-main);
+    transition: background 0.3s ease;
+    }
+
+    .navbar .dropdown-item:hover {
+    background-color: var(--accent-gold);
+    color: var(--background-navbar);
+    }
+
+        .sidebar {
+            width: 230px;
+            height: 100vh;
+            background-color: var(--background-navbar);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+            /* لما تكون مخفية */
+            .sidebar.hidden {
+                transform: translateX(-100%);
+            }
+
+        /* ====== Header ====== */
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo {
+            width: 35px;
+            height: 35px;
+            margin-right: 0.7rem;
+        }
+
+        .sidebar h3 {
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* ====== Menu ====== */
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+            margin: 0;
+        }
+
+            .sidebar-menu li {
+                margin: 1rem 0;
+            }
+
+            .sidebar-menu a {
+                color: var(--text-main);
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                padding: 0.5rem 0.7rem;
+                border-radius: 6px;
+                transition: 0.3s;
+            }
+
+                .sidebar-menu a i {
+                    margin-right: 0.7rem;
+                }
+
+                .sidebar-menu a:hover {
+                    background-color: var(--accent-gold);
+                    color: var(--background-navbar);
+                }
+
+        /* ====== Toggle Button ====== */
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: var(--accent-gold);
+            border: none;
+            color: var(--background-navbar);
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1100;
+            transition: 0.3s;
+        }
+
+            .sidebar-toggle:hover {
+                opacity: 0.9;
+            }
+
+        .all-conversations-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background-color: var(--background-card);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .all-conversations-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .conversation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.7rem;
+            border-radius: 6px;
+            background-color: var(--background-navbar);
+            margin-bottom: 0.5rem;
+            transition: background 0.3s ease;
+        }
+
+            .conversation-item:hover {
+                background-color: var(--accent-gold);
+                color: var(--background-navbar);
+            }
+
+        .conversation-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sender-Text {
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .message-count, .message-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .conversation-text {
+            max-width: 60%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+        }
+   </style>
+
+ 
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SmartChat.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+
+    <!-- Top Bar ثابت -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+
+            <!-- Left: Logo + Home -->
+            <a class="navbar-brand d-flex align-items-center" href="/Dashboard">
+                <img src="~/imge/smart.jpg" alt="Logo" width="30" height="30" class="d-inline-block align-top mr-2" />
+                SmartChat
+            </a>
+            <ul class="navbar-nav ml-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="/User/Dashboard">Home</a>
+                </li>
+            </ul>
+
+            <!-- Right Side -->
+            <div class="ml-auto d-flex align-items-center">
+                <!-- Search -->
+                <form class="form-inline mr-3">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- User Dropdown -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                        <img src="~/imge/logo.jpg" alt="User Avatar" width="40" height="40" class="rounded-circle">
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="#">Profile</a>
+                        <a class="dropdown-item" href="#">Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Logout</a>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - SmartChat.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
-    </footer>
+    </nav>
+    
+    <!-- Sidebar + Main Content -->
+<div>
+        
+      <div class="sidebar">
+            <button id="toggleSidebar" class="sidebar-toggle">☰</button>
+      <div class="sidebar-header"  >
+          <img src="~/imge/smart.jpg" alt="Logo" class="sidebar-logo">
+          <h3>SmartChat</h3>
+      </div>
+
+      <ul class="sidebar-menu">
+          <li><a href="/User/MyChats"><i class="fas fa-comments"></i>Chats</a></li>
+          <li><a href="/User/NewChat"><i class="fas fa-users"></i> NewChat</a></li>
+          <li><a href="/User/profile"><i class="fas fa-cog"></i> Profile</a></li>
+         @if (User.IsInRole("Admin"))
+         {
+             <li>
+                 <a href="/User/AllConversations"><i class="fas fa-list"></i> All Conversations</a>
+             </li>
+         }
+      </ul>
+    </div>
+     <main>
+         @RenderBody()  
+     </main>
+  </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
+
+    <script>
+        const sidebar = document.querySelector(".sidebar");
+        const toggleBtn = document.getElementById("toggleSidebar");
+
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("hidden");
+        });
+    </script>
 </body>
 </html>

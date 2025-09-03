@@ -6,6 +6,7 @@ namespace SmartChat.Web.Views.viewModle
 {
     public class ChatViewModel
     {
+        public string Title { get; set; }
         public Guid CurrentUserId { get; set; }
         public ConversationDto Conversation { get; set; }
         public List<MessageDto> Messages { get; set; }

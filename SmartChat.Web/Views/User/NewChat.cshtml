@@ -1,0 +1,88 @@
+﻿@model List<SmartChat.Application.Dtos.Users.UserDto>
+@{
+    Layout = "_Layout";
+}
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<div class="all-conversations-container">
+    <div class="all-conversations-header">
+        Start New Chat
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position: fixed; top: 80px; right: 20px; z-index: 2000;"></div>
+
+    <div class="list-group">
+        @foreach (var user in Model)
+        {
+            <div class="list-group-item d-flex justify-content-between align-items-center bg-[var(--background-card)] text-[var(--text-main)] mb-2 rounded">
+                <span>@user.Name (@user.RoleName)</span>
+                <button class="btn btn-sm btn-primary start-chat-btn"
+                        data-user-id="@user.Id"
+                        data-user-name="@user.Name">
+                    Start Chat
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".start-chat-btn").click(function () {
+            var userId = $(this).data("user-id");
+            var userName = $(this).data("user-name");
+
+            $.ajax({
+                type: "POST",
+                url: "/User/StartConversation",
+                data: { agentId: userId },
+                dataType: "json",
+                success: function (response) {
+                    showToast(`Chat started with ${userName} successfully!`);
+
+
+                    $("#myConversationsList").prepend(`
+        <div class="conversation-item p-2 mb-2 bg-[var(--background-card)] rounded">
+            <span>${userName}</span>
+            <button class="btn btn-sm btn-primary open-chat-btn" data-conversation-id="${response.id}">
+                Open
+            </button>
+        </div>
+    `);
+                },
+                error: function () {
+                    showToast(`Failed to start chat with ${userName}`, true);
+                }
+            });
+        });
+
+        // ===== Toast Function =====
+        function showToast(message, isError = false) {
+            var toastId = "toast" + Date.now();
+
+            var toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${isError ? 'bg-danger' : 'bg-success'} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            $("#toastContainer").append(toastHtml);
+
+            var toastEl = document.getElementById(toastId);
+            var bsToast = new bootstrap.Toast(toastEl);
+            bsToast.show();
+
+            setTimeout(() => {
+                $(toastEl).remove();
+            }, 3500);
+        }
+    });
+
+
+</script>

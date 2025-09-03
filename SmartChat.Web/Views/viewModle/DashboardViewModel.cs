@@ -2,11 +2,11 @@
 {
     public class DashboardViewModel
     {
-        public CurrentUserVm CurrentUser { get; set; }   
-        public List<UserDashboardViewModel> Conversations { get; set; }
-
-        public List<UserDashboardViewModel> MyConversations { get; set; } = new List<UserDashboardViewModel>();
-        public List<UserDashboardViewModel> AllConversations { get; set; } = new List<UserDashboardViewModel>();
-        public List<UserVm> AllUsers { get; set; }
+        public CurrentUserViewModel CurrentUser { get; set; }   
+        public List<UserDashboardViewModel> MyConversations { get; set; } 
+        public List<UserDashboardViewModel> AllConversations { get; set; }  
+        public List<UserDashboardViewModel> NewChatUsers { get; set; } 
+        public ChatViewModel ChatUsers { get; set; }
+        public List<UserViewModel> AllUsers { get; set; }
     }
 }

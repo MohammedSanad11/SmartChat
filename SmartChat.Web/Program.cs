@@ -1,14 +1,18 @@
 
+using Microsoft.Extensions.DependencyInjection;
+using SmartChat.Web.Mapping;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<SmartChatDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddAutoMapperService();
+
 builder.Services.AddRepositoryService();
 
 builder.Services.AddRondominterfacesService();
 
-builder.Services.AddAutoMapperService();
 
 builder.Services.AddCustomMidMediatorServiceOfUser();
 

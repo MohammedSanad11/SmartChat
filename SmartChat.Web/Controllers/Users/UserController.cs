@@ -1,221 +1,119 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.VisualBasic;
 using SmartChat.Application.Core.Interfasces;
+using SmartChat.Application.Dtos.Dashboad;
+using SmartChat.Application.Dtos.Users;
+using SmartChat.Application.Features.Conversations.Quereys.GetAllConversationByAdmin;
+using SmartChat.Application.Features.Conversations.Quereys.GetMyConversation;
 using SmartChat.Application.Features.Users.Commands.AddUsers;
 using SmartChat.Application.Features.Users.Commands.DeleteUsers;
 using SmartChat.Application.Features.Users.Commands.UpdateUsers;
 using SmartChat.Application.Features.Users.Queres.GetAllUsers;
+using SmartChat.Application.Features.Users.Queres.GetCurrentUser;
+using SmartChat.Application.Features.Users.Queres.GetNewChat;
+using SmartChat.Application.Features.Users.Queres.GetUserDashboard;
 using SmartChat.Application.Features.Users.Queres.GetUsersById;
 using SmartChat.Domain.Entities.Conversations;
+using SmartChat.Domain.Entities.Messages;
+using SmartChat.Domain.Entities.Users;
 using SmartChat.Web.Mapping;
 using SmartChat.Web.Views.viewModle;
+using System.Linq;
 
 namespace SmartChat.Web.Controllers.Users
 {
     public class UserController : Controller
     {
         private readonly ICustomMediator _mediator;
-        private readonly IUintOfWork _uintOfWork;
         private readonly IMapper _mapper;
-
-        public UserController(ICustomMediator mediator, IUintOfWork uintOfWork)
+        public UserController(ICustomMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
-            _uintOfWork = uintOfWork;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Dashboard()
         {
-            var username = User.Identity?.Name;
-            if (string.IsNullOrEmpty(username))
-                return RedirectToAction("Login", "Auth");
+            var userId = Guid.Parse(User.FindFirst("UserId").Value);
 
-            var currentUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.UesrName == username);
-            if (currentUser == null) return NotFound();
+            var dto = await _mediator.Send(new GetUserDashboardQuery { UserId = userId });
 
-            var role = await _uintOfWork._RolesRepository.GetByConditionAsync(r => r.Id == currentUser.RoleId);
-            ViewData["RoleName"] = role?.Name ?? "Unknown";
+            var view = _mapper.Map<UserDashboardViewModel>(dto);
 
-            // ===== My Conversations =====
-            var myConversations = await _uintOfWork._ConversationsRepository.FindAsync(
-                c => c.UserId == currentUser.Id || c.AgentId == currentUser.Id,
-                q => q.Include(c => c.messages)
-                      .Include(c => c.User)
-                      .Include(c => c.Agent)
-            );
+            return View(view);
 
-            // ===== All Conversations (Admin only) =====
-            IEnumerable<Conversation> allConversations = null;
-            if (role?.Name == "Admin")
-            {
-                allConversations = await _uintOfWork._ConversationsRepository.FindAsync(
-                    c => true,
-                    q => q.Include(c=>c.messages)
-                          .Include(c => c.User)
-                          .Include(c => c.Agent)
-                );
-            }
-
-            // ===== Build My Conversations VM =====
-            var myDashboardVm = new List<UserDashboardViewModel>();
-            foreach (var c in myConversations)
-            {
-                var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
-
-                string conversationTitle = "";
-                if (c.UserId == currentUser.Id && c.Agent != null)
-                    conversationTitle = c.Agent.Name;
-                else if (c.AgentId == currentUser.Id && c.User != null)
-                    conversationTitle = c.User.Name;
-                else if (c.User != null && c.Agent != null)
-                    conversationTitle = c.User.Name + " & " + c.Agent.Name;
-                else
-                    conversationTitle = "Unknown";
-
-                string senderName = "Unknown";
-                if (lastMessage?.SenderId != null)
-                {
-                    var senderUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId);
-                    senderName = senderUser?.Name ?? "Unknown";
-                }
-
-                myDashboardVm.Add(new UserDashboardViewModel
-                {
-                    ConversationId = c.Id,
-                    ConversationTitle = conversationTitle,
-                    CreatedAt = c.CreateAt,
-                    LastMessageText = lastMessage?.Text ?? "",
-                    LastMessageSenderName = senderName,
-                    LastMessageAt = lastMessage?.CreatedAt,
-                    MessageCount = c.messages?.Count() ?? 0
-                });
-            }
-
-            // ===== Build All Conversations VM for Admin (Hidden content) =====
-            var allDashboardVm = new List<UserDashboardViewModel>();
-            if (allConversations != null)
-            {
-                foreach (var c in allConversations)
-                {
-                    var lastMessage = c.messages?.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
-
-                    string senderName = "Unknown";
-                    if (lastMessage?.SenderId != null)
-                    {
-                        var senderUser = await _uintOfWork._UsersRepository.GetByConditionAsync(u => u.Id == lastMessage.SenderId);
-                        senderName = senderUser?.Name ?? "Unknown";
-                    }
-
-                    allDashboardVm.Add(new UserDashboardViewModel
-                    {
-                        ConversationId = c.Id,
-                        ConversationTitle = (c.User?.Name ?? "Unknown") + " & " + (c.Agent?.Name ?? "Unknown"),
-                        CreatedAt = c.CreateAt,
-                        LastMessageText = "Hidden", // نخفي محتوى الرسالة
-                        LastMessageSenderName = senderName,
-                        LastMessageAt = lastMessage?.CreatedAt,
-                        MessageCount = c.messages?.Count() ?? 0
-                    });
-                }
-            }
-
-            // ===== All Users for Start Chat =====
-            var allUsers = await _uintOfWork._UsersRepository.FindAsync(u => u.Id != currentUser.Id);
-
-            var vm = new DashboardViewModel
-            {
-                CurrentUser = new CurrentUserVm
-                {
-                    Id = currentUser.Id,
-                    Name = currentUser.Name,
-                    Role = role?.Name ?? "Unknown",
-                    ConversationCount = myDashboardVm.Count
-                },
-                MyConversations = myDashboardVm,
-                AllConversations = allDashboardVm,
-                AllUsers = allUsers.Select(u => new UserVm { Id = u.Id, Name = u.Name }).ToList()
-            };
-
-            return View(vm);
         }
 
-
-        public async Task<IActionResult> Details(Guid id)
+        public async Task<IActionResult> Profile()
         {
-            var user = await _mediator.Send(new GetUserByIdQuery(id));
-            if (user == null)
-                return NotFound();
+            var userId = Guid.Parse(User.FindFirst("UserId").Value);
 
-            return View(user);
+            var currentUser =await _mediator.Send(new GetCurrentUserQuery( userId ));
+
+            var view = _mapper.Map<CurrentUserViewModel>(currentUser);
+
+            return PartialView("Profile", view);
         }
 
-   
-        public IActionResult Create()
+        public async Task<IActionResult> MyChats()
         {
-            return View();
+            var userId = Guid.Parse(User.FindFirst("UserId").Value);
+
+
+            var myConversations = await _mediator.Send(new GetMyConversationsQuery(userId));
+
+            var view = _mapper.Map<List<ConversationVieModel>>(myConversations);
+
+            return PartialView("MyChats", view);
         }
 
-        
-        [HttpPost]
-        public async Task<IActionResult> Create(AddCommandUser command)
+        public async Task<IActionResult> AllConversations()
         {
-            if (!ModelState.IsValid)
-                return View(command);
+            var allConversationsDashboard = await _mediator.Send(new GetAllConversationByAdminQuery());
 
-            var id = await _mediator.Send(command);
-            return RedirectToAction(nameof(Index));
+            return PartialView("AllConversations", allConversationsDashboard);
         }
-        public async Task<IActionResult> Edit(Guid id)
-        {
-            var user = await _mediator.Send(new GetUserByIdQuery(id));
-            if (user == null)
-                return NotFound();
 
-            var command = new UpdateCommandUser
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                //Password
-            };
-            return View(command);
+        public async Task<IActionResult> NewChat()
+        {
+            var currentUserId = Guid.Parse(User.FindFirst("UserId").Value);
+            var users = await _mediator.Send(new GetNewChatUsersQuery(currentUserId));
+            return PartialView("NewChat", users);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Guid id, UpdateCommandUser command)
+        public async Task<IActionResult> StartConversation(Guid agentId)
         {
-            if (id != command.Id)
-                return BadRequest();
+            var userId = Guid.Parse(User.FindFirst("UserId").Value);
 
-            if (!ModelState.IsValid)
-                return View(command);
+            var currentUser = await _mediator.Send(new GetCurrentUserQuery(userId));
+            var currentUserId = currentUser.Id;
 
-            var success = await _mediator.Send(command);
-            if (!success)
-                return NotFound();
+            var conversationId = await _mediator.Send(new AddCommandConversation
+            {
+                UserId = currentUserId,
+                AgentId = agentId
+            });
 
-            return RedirectToAction(nameof(Index));
+            return Json(new { id = conversationId });
         }
 
-        
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpPost]
+        public async Task<IActionResult> DeleteConversation(Guid id)
         {
-            var user = await _mediator.Send(new GetUserByIdQuery(id));
-            if (user == null)
-                return NotFound();
+            var result = await _mediator.Send(new DeleteCommandConversation { Id = id });
 
-            return View(user);
+            if (result)
+            {
+                return Json(new { success = true, message = "Conversation deleted successfully!" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Conversation not found!" });
+            }
         }
 
-  
-        [HttpPost, ActionName("Delete")]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var success = await _mediator.Send(new DeleteCommandUser { Id = id });
-            if (!success)
-                return NotFound();
-
-            return RedirectToAction(nameof(Index));
-        }
     }
 }

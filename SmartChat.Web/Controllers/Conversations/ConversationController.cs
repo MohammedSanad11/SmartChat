@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using SmartChat.Domain.Entities.Conversations;
+using SmartChat.Domain.Entities.Roles;
 using SmartChat.Domain.Entities.Users;
 
 namespace SmartChat.Web.Controllers.Conversations
@@ -50,5 +51,30 @@ namespace SmartChat.Web.Controllers.Conversations
 
             return RedirectToAction("Dashboard", "User");
         }
+
+        public async Task<IActionResult> Delete(ConversationDto conversation)
+        {
+            var username = User.Identity?.Name;
+
+
+           
+               
+
+            var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+
+            if(role!="Admin")
+              return Unauthorized();
+
+            var result = await _mediator.Send(new DeleteCommandConversation{ Id = conversation.Id});
+        
+             if(!result)
+             {
+                return BadRequest("Delete failed or not authorized.");
+             }
+             
+             return Ok("Deleted successfully.");
+        
+        }
+
     }
 }

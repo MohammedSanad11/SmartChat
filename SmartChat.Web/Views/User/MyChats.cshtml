@@ -1,0 +1,110 @@
+﻿@model List<SmartChat.Web.Views.viewModle.ConversationVieModel>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "My Chats";
+}
+
+<div class="conversation-container" id="myConversationsList">
+    @foreach (var convo in Model)
+    {
+        <div class="conversation-item d-flex justify-content-between align-items-center p-2 mb-2 bg-[var(--background-card)] rounded" data-conversation-id="@convo.Id">
+            <a href="@Url.Action("Index","Chat", new { conversationId = convo.Id })" class="flex-grow-1 text-decoration-none text-[var(--text-main)] me-2">
+                <div class="conversation-info d-flex justify-content-between align-items-center">
+                    <div class="conversation-title">
+                        <strong>@convo.Title</strong>
+                    </div>
+                    <div class="conversation-meta text-[var(--text-muted)]">
+                        <span>@convo.MessageCount msg</span> |
+                        <span>@convo.LastMessageTime?.ToString("HH:mm dd/MM") ?? "-"</span>
+                    </div>
+                </div>
+                <div class="conversation-text text-[var(--text-main)]">
+                    @convo.LastMessageText
+                </div>
+            </a>
+            <button class="btn btn-sm btn-danger delete-chat-btn">Delete</button>
+        </div>
+    }
+</div>
+
+
+<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 2000;"></div>
+
+<style>
+    .conversation-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 1rem;
+    }
+
+    .conversation-item {
+        transition: background 0.2s;
+    }
+
+        .conversation-item:hover {
+            background-color: var(--accent-blue);
+        }
+
+    .conversation-title {
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    .conversation-meta {
+        font-size: 0.85rem;
+    }
+
+    .conversation-text {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 0.2rem;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".delete-chat-btn").click(function () {
+                var button = $(this);
+                var conversationId = button.closest(".conversation-item").data("conversation-id");
+
+                if (!confirm("Are you sure you want to delete this conversation?")) return;
+
+                $.ajax({
+                    type: "POST",
+                    url: "/User/DeleteConversation",
+                    data: { id: conversationId },
+                    success: function (response) {
+                        if (response.success) {
+                            button.closest(".conversation-item").remove();
+                            showToast(response.message, false);
+                        } else {
+                            showToast(response.message, true);
+                        }
+                    },
+                    error: function () {
+                        showToast("Error deleting conversation!", true);
+                    }
+                });
+            });
+
+         
+            function showToast(message, isError) {
+                var toastId = "toast" + Date.now();
+                var toastHtml = `
+                            <div id="${toastId}" class="toast align-items-center text-white ${isError ? 'bg-danger' : 'bg-success'} border-0 mb-2" role="alert">
+                                <div class="d-flex">
+                                    <div class="toast-body">${message}</div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                </div>
+                            </div>`;
+                $("#toastContainer").append(toastHtml);
+                var bsToast = new bootstrap.Toast(document.getElementById(toastId));
+                bsToast.show();
+                setTimeout(() => { $("#" + toastId).remove(); }, 3500);
+            }
+        });
+    </script>
+}

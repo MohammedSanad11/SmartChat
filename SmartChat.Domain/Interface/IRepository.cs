@@ -28,7 +28,6 @@ namespace SmartChat.Domain.Interface
 
         void Delete(T entity);
 
-        Task<int> SaveChange();
 
     }
 }

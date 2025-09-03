@@ -11,10 +11,11 @@ namespace SmartChat.Application.Features.Conversations.Quereys.GetByIdConversati
     public class GetByIdConversationQuery:IRequest<ConversationDto>
     {
         public Guid Id { get; set; }
-
-        public GetByIdConversationQuery(Guid Id)
+        public Guid CurrentUserId { get; set; }
+        public GetByIdConversationQuery(Guid Id, Guid currentUserId)
         {
             this.Id = Id;
+            this.CurrentUserId = currentUserId;
         }
     }
 }

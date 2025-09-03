@@ -7,6 +7,7 @@ using SmartChat.Domain.Entities.Messages;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection.Emit;
 
 namespace SmartChat.Infrastructre.Configurations.Messages
 {
@@ -26,6 +27,11 @@ namespace SmartChat.Infrastructre.Configurations.Messages
                 .WithMany(x=>x.messages)
                 .HasForeignKey(x=>x.ConversationId);
 
+            builder.HasOne(m => m.user)
+            .WithMany(u => u.Messages)   
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+           
             builder.ToTable("Messages");
         }
     }

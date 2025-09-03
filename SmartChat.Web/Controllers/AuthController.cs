@@ -28,7 +28,6 @@ namespace SmartChat.Web.Controllers
         public IActionResult Login() => View("Login");
 
         [HttpPost]
-        [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -47,6 +46,7 @@ namespace SmartChat.Web.Controllers
 
                var claims = new List<Claim>
                {
+                    new Claim("UserId", user.Id.ToString()),
                    new Claim(ClaimTypes.Name, user.UesrName),
                    new Claim(ClaimTypes.Role, user.Role.Name)
                };

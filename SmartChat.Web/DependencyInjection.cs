@@ -1,4 +1,14 @@
-﻿namespace Microsoft.Extensions.DependencyInjection;
+﻿using SmartChat.Application.Core;
+using SmartChat.Application.Dtos.Dashboad;
+using SmartChat.Application.Features.Conversations.Commands.SendMessage;
+using SmartChat.Application.Features.Conversations.Quereys.GetAllConversationByAdmin;
+using SmartChat.Application.Features.Conversations.Quereys.GetAllConversationByAdmin.GetAllConversationByAdmin;
+using SmartChat.Application.Features.Conversations.Quereys.GetMyConversation;
+using SmartChat.Application.Features.Users.Queres.GetCurrentUser;
+using SmartChat.Application.Features.Users.Queres.GetNewChat;
+using SmartChat.Application.Features.Users.Queres.GetUserDashboard;
+
+namespace Microsoft.Extensions.DependencyInjection;
     public static class DependencyInjection
     {
         public static IServiceCollection AddRepositoryService(this IServiceCollection services)
@@ -22,23 +32,25 @@
            services.AddControllersWithViews();
             return (services);
         }
-
-        public static IServiceCollection AddAutoMapperService(this IServiceCollection services)
+         public static IServiceCollection AddAutoMapperService(this IServiceCollection services)
          {
-
-               services.AddAutoMapper(typeof(MappingProfile));
-               services.AddAutoMapper(typeof(SmartChat.Web.Mapping.WebMappingProfile).Assembly);
-               return (services);
+         
+             services.AddAutoMapper(typeof(MappingProfile));
+             services.AddAutoMapper(typeof(SmartChat.Web.Mapping.WebMappingProfile).Assembly);
+             return (services);
          }
-        public static IServiceCollection AddCustomMidMediatorServiceOfUser(this IServiceCollection services)
+    public static IServiceCollection AddCustomMidMediatorServiceOfUser(this IServiceCollection services)
         {
             services.AddScoped<IRequestHandler<AddCommandUser, Guid>, AddCommandHandelUser>();
             services.AddScoped<IRequestHandler<DeleteCommandUser, bool>, DeleteCommandHandleUser>();
             services.AddScoped<IRequestHandler<UpdateCommandUser, bool>, UpdateCommandHandleUser>();
-            services.AddScoped<IRequestHandler<UpdateCommandUser, bool>, UpdateCommandHandleUser>();
             services.AddScoped<IRequestHandler<GetAllUserQuery, List<UserDto>>, GetAllUsersQueryHandler>();
             services.AddScoped<IRequestHandler<GetUserByIdQuery, UserDto>, GetUsersByIdHandleQuery>();
-
+            services.AddScoped<IRequestHandler<GetNewChatUsersQuery, List<UserDto>>, GetNewChatQueryHandle > ();
+            services.AddScoped<IRequestHandler<GetCurrentUserQuery, CurrentUserDto>, GetCurrentUserQueryHandle>();
+            services.AddScoped<IRequestHandler<GetUserDashboardQuery, UserDashboardDto>, GetUserDashboardQueryHandle>();
+            
+            
             return (services);
         }
 
@@ -70,6 +82,9 @@
             services.AddScoped<IRequestHandler<UpdateCommandConversation, bool>, UpdateCommandConversationHandle>();
             services.AddScoped<IRequestHandler<GetAllConversationsQuery, List<ConversationDto>>, GetAllConversationsHandleQuery>();
             services.AddScoped<IRequestHandler<GetByIdConversationQuery, ConversationDto>, GetByIdConversationQueryHandle>();
+            services.AddScoped<IRequestHandler<GetAllConversationByAdminQuery, AllChatDashboardDto>, GetAllConversationByAdminHandle>();
+            services.AddScoped<IRequestHandler<GetMyConversationsQuery, List<ConversationDto>>, GetMyConversationsQueryHandle>();
+            services.AddScoped<IRequestHandler<SendMassageCommand,MessageDto>, SendMassageCommandHandle>();
 
             return (services);
         }

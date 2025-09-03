@@ -11,12 +11,16 @@ namespace SmartChat.Application.Dtos.Conversations
     public class ConversationDto
     {
         public Guid Id { get; set; }           
+       public string Title { get; set; }
+        public Guid CurrentUserId { get; set; }
         public DateTime CreatedAt { get; set; } 
         public DateTime? EndedAt { get; set; }
-        public List<UserDto> Users { get; set; }
-        public List<MessageDto> Messages { get; set; }
+        public int MessageCount { get; set; }
+        public string LastMessageText { get; set; }
+        public DateTime? LastMessageTime { get; set; }
+        public string LastMessageSenderName { get; set; }
+        public List<MessageDto> messages { get; set; }
         public Guid AgentId { get; set; }
         public Guid UserId { get; set; }
-
     }
 }
